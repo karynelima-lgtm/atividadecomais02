@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verificar:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Verificar arquivos obrigatórios
+        run: |
+          for arquivo in README.md index.html .gitignore; do
+            test -f "$arquivo" || {
+              echo "::error::falta o arquivo $arquivo"
+              exit 1
+            }
+          done
+
+      - name: Verificar marcadores de conflito
+        run: |
+          if grep -rInE '^(<{7}|={7}|>{7})( |$)' \
+            --include='*.html' \
+            --include='*.css' \
+            --include='*.js' \
+            --include='*.json' \
+            --include='*.md' \
+            .; then
+            echo "::error::marcador de conflito encontrado no código"
+            exit 1
+          fi
+
+      - name: Confirmar estrutura básica
+        run: |
+          test -s README.md
+          test -s index.html
+          echo "Verificações concluídas com sucesso."
